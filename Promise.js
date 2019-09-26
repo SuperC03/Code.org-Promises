@@ -8,21 +8,7 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
     thenablesComplete = false; // If All 'catch' and 'then' Have Been Executed
   var thisPromise = this; // To Allow Chaining of Functions by Returning This Instance
 
-  _executable(function (response) { // The 'resolve()' Handler
-    if (this.state == "reject") {
-      return;
-    }
-    this.state = "resolved";
-    thenables.forEach(function (thenable) { // Cycles Through All 'Thenables'
-      thenable(response); // Executes the 'Thenable'
-    });
-    thenablesComplete = true; // Indicates All 'Thenables' Have Been Executed
-    if (thenablesComplete) { // Checks if All 'Thenables' and 'Catchables' Have Been Executed
-      finalables.forEach(function (finalable) { // Cycles Through All 'Finalables'
-        finalable(); // Executes the 'Finalable'
-      });
-    }
-  }, function (error) { // The 'reject()' Handler
+  this._runCatchable = function (error) {
     if (this.state == "resolved") {
       return;
     }
@@ -36,7 +22,23 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
         finalable(); // Executes the 'Finalable'
       });
     }
-  });
+  }
+
+  this._runThenables = function (response) {
+    if (this.state == "reject") {
+      return;
+    }
+    this.state = "resolved";
+    thenables.forEach(function (thenable) { // Cycles Through All 'Thenables'
+      thenable(response); // Executes the 'Thenable'
+    });
+    thenablesComplete = true; // Indicates All 'Thenables' Have Been Executed
+    if (thenablesComplete) { // Checks if All 'Thenables' and 'Catchables' Have Been Executed
+      finalables.forEach(function (finalable) { // Cycles Through All 'Finalables'
+        finalable(); // Executes the 'Finalable'
+      });
+    }
+  }
 
   this.then = function (_thenable) { // Accepts a Function to be Called on 'resolve()'
     thenables.push(_thenable); // Add to the List of 'Thenables'
@@ -50,4 +52,6 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
     finalables.push(_finalable); // Add to the List of 'Finalables'
     return thisPromise; // Return Instance for Chaining
   };
+
+  _executable(this._runThenables, this._runCatchable);
 }
