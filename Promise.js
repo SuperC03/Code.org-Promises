@@ -8,7 +8,7 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
     thenablesComplete = false; // If All 'catch' and 'then' Have Been Executed
   var thisPromise = this; // To Allow Chaining of Functions by Returning This Instance
 
-  this._runCatchable = function (response) {
+  this._runCatchables = function (response) {
     // This is to protect from both resolve and reject being run
     if (this.state == "resolved") {
       return;
@@ -17,7 +17,7 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
     if (catchables.length >= 1) {
       response = catchables[0](response);
       catchables.shift();
-      thisPromise._runCatchable(response);
+      thisPromise._runCatchables(response);
     } else {
       thisPromise._runFinalables(response);
     }
@@ -36,7 +36,7 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
         thisPromise._runThenables(response);
       } catch (err) {
         this.state = "reject";
-        thisPromise._runCatchable(err);
+        thisPromise._runCatchables(err);
       }
     } else {
       thisPromise._runFinalables(response);
@@ -64,5 +64,5 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
     return thisPromise; // Return Instance for Chaining
   };
 
-  _executable(this._runThenables, this._runCatchable);
+  _executable(this._runThenables, this._runCatchables);
 }
