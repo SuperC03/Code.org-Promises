@@ -30,9 +30,14 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
     }
     this.state = "resolved";
     if (thenables.length >= 1) {
-      response = thenables[0](response);
-      thenables.shift();
-      thisPromise._runThenables(response);
+      try {
+        response = thenables[0](response);
+        thenables.shift();
+        thisPromise._runThenables(response);
+      } catch (err) {
+        this.state = "reject";
+        thisPromise._runCatchable(err);
+      }
     } else {
       thisPromise._runFinalables(response);
     }
