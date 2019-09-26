@@ -1,5 +1,6 @@
 function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' */ ) {
 
+  var state = "unknown";
   var thenables = []; // All 'then' Callback Functions
   var catchables = []; // All 'catch' Callback Functions
   var finalables = []; // All 'final' Callback Functions
@@ -8,21 +9,29 @@ function Promise(_executable /* Gives User Access to 'resolve()' and 'reject()' 
   var thisPromise = this; // To Allow Chaining of Functions by Returning This Instance
 
   _executable(function (response) { // The 'resolve()' Handler
+    if (this.state == "reject") {
+      return;
+    }
+    this.state = "resolved";
     thenables.forEach(function (thenable) { // Cycles Through All 'Thenables'
       thenable(response); // Executes the 'Thenable'
     });
     thenablesComplete = true; // Indicates All 'Thenables' Have Been Executed
-    if (thenablesComplete && catchablesComplete) { // Checks if All 'Thenables' and 'Catchables' Have Been Executed
+    if (thenablesComplete) { // Checks if All 'Thenables' and 'Catchables' Have Been Executed
       finalables.forEach(function (finalable) { // Cycles Through All 'Finalables'
         finalable(); // Executes the 'Finalable'
       });
     }
   }, function (error) { // The 'reject()' Handler
+    if (this.state == "resolved") {
+      return;
+    }
+    this.state = "reject";
     catchables.forEach(function (catchable) { // Cycles Through All 'Catchables'
       catchable(error); // Executes the 'Catchable'
     });
     catchablesComplete = true; // Indicates All 'Catchables' Have Been Executed
-    if (thenablesComplete && catchablesComplete) { // Checks if All 'Thenables' and 'Catchables' Have Been Executed
+    if (catchablesComplete) { // Checks if All 'Thenables' and 'Catchables' Have Been Executed
       finalables.forEach(function (finalable) { // Cycles Through All 'Finalables'
         finalable(); // Executes the 'Finalable'
       });
